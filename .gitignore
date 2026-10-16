@@ -1,0 +1,8 @@
+# deb packages per distro
+dist/
+
+# Intellij
+.idea/
+
+# Decrypted secrets (see README.md)
+secrets*
