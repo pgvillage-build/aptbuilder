@@ -1,0 +1,28 @@
+services:
+  debgen:
+    image: ghcr.io/pgvillage-tools/specbuilder:${SPECBUILDER_VERSION:-latest}
+    # scripts in a git checkout belong to the host user, so run as root to be able to overwrite them
+    user: root
+    # specbuilder always names its output <name>-<package_arch>.spec (rpm arch names);
+    # rename those to executable build-<name>-<deb arch>-deb.sh scripts
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        /specbuilder
+        for spec in /host/scripts/*.spec; do
+          script="$${spec%.spec}"
+          case "$${script}" in
+            *-x86_64) script="$${script%-x86_64}-amd64" ;;
+            *-aarch64) script="$${script%-aarch64}-arm64" ;;
+          esac
+          script="$${script%/*}/build-$${script##*/}-deb.sh"
+          mv "$${spec}" "$${script}"
+          chmod 0755 "$${script}"
+          echo "Renamed to $${script}"
+        done
+    volumes:
+      - ./:/host
+    environment:
+      GITHUB2SPEC_CONFIG: /host/config/github2spec.yaml
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}

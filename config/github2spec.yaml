@@ -1,0 +1,78 @@
+template: /host/templates/build-deb.sh.j2
+dest: /host/scripts/
+repositories:
+  chainsmith:
+    organization: pgvillage-tools
+    asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
+    files:
+      - src: '{{ repository }}'
+        dest: '/usr/bin/{{ repository }}'
+        mode: '0755'
+  pgtester:
+    organization: pgvillage-tools
+    asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
+    files:
+      - src: '{{ repository }}'
+        dest: '/usr/bin/{{ repository }}'
+        mode: '0755'
+  pgfga:
+    organization: pgvillage-tools
+    asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
+    files:
+      - src: '{{ repository }}'
+        dest: '/usr/bin/{{ repository }}'
+        mode: '0755'
+  pgav:
+    organization: pgvillage-tools
+    asset_filter: '{{ repository }}_{{ version }}_Linux-{{ package_arch }}.tar.gz$'
+    files:
+      - src: '{{ repository }}'
+        dest: '/usr/bin/{{ repository }}'
+        mode: '0755'
+  pgroute66:
+    organization: pgvillage-tools
+    asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
+    files:
+      - src: '{{ repository }}'
+        dest: '/usr/bin/{{ repository }}'
+        mode: '0755'
+  pgquartz:
+    organization: pgvillage-tools
+    asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
+    files:
+      - src: '{{ repository }}'
+        dest: '/usr/bin/{{ repository }}'
+        mode: '0755'
+  pgcustodian:
+    organization: pgvillage-tools
+    asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
+    files:
+      - src: '{{ repository }}'
+        dest: '/usr/bin/{{ repository }}'
+        mode: '0755'
+  stolon:
+    organization: pgvillage-tools
+    asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
+    files:
+      - src: 'stolonctl'
+        dest: '/usr/bin/stolonctl'
+        mode: '0755'
+      - src: 'stolon-sentinel'
+        dest: '/usr/bin/stolon-sentinel'
+        mode: '0755'
+      - src: 'stolon-proxy'
+        dest: '/usr/bin/stolon-proxy'
+        mode: '0755'
+      - src: 'stolon-keeper'
+        dest: '/usr/bin/stolon-keeper'
+        mode: '0755'
+  etcd:
+    organization: etcd-io
+    asset_filter: '{{ package_name }}-{{ version }}-linux-{{ binary_arch }}.tar.gz$'
+    files:
+      - src: 'etcd-{{ version }}-linux-{{ binary_arch }}/etcdctl'
+        dest: '/usr/bin/etcdctl'
+        mode: '0755'
+      - src: 'etcd-{{ version }}-linux-{{ binary_arch }}/etcd'
+        dest: '/usr/bin/etcd'
+        mode: '0755'
