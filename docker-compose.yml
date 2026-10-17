@@ -1,6 +1,8 @@
 services:
   debgen:
     image: ghcr.io/pgvillage-tools/specbuilder:${SPECBUILDER_VERSION:-latest}
+    # specbuilder generates scripts for the architecture it runs on
+    platform: linux/${ARCH:-arm64}
     # scripts in a git checkout belong to the host user, so run as root to be able to overwrite them
     user: root
     # specbuilder always names its output <name>-<package_arch>.spec (rpm arch names);

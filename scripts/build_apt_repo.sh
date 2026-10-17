@@ -42,7 +42,8 @@ trap 'rm -rf "${TMP_DIR}"' EXIT
 mkdir -p "${REPO_DIR}"
 cd "${REPO_DIR}"
 
-find "${DEB_DIR}" -maxdepth 1 -name '*.deb' | sort | while read -r DEB; do
+# DEB_DIR may be missing when only re-indexing a merged repository
+[ -d "${DEB_DIR}" ] && find "${DEB_DIR}" -maxdepth 1 -name '*.deb' | sort | while read -r DEB; do
 	PACKAGE=$(dpkg-deb --field "${DEB}" Package)
 	case "${PACKAGE}" in
 		lib?*) PREFIX=${PACKAGE:0:4} ;;
@@ -56,6 +57,8 @@ done
 
 # --- (re)generate indexes for every codename in the pool ---------------------
 for SUITE_POOL in pool/*/; do
+	# pool/*/ is not expanded when the pool is empty
+	[ -d "${SUITE_POOL}" ] || continue
 	SUITE=$(basename "${SUITE_POOL}")
 	SUITE_DIST="dists/${SUITE}"
 	ARCHS=$(find "${SUITE_POOL}" -name '*.deb' -exec dpkg-deb --field {} Architecture \; |
