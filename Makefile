@@ -13,3 +13,10 @@ build:
 	chmod 777 deb
 	docker-compose pull debbuilder
 	docker-compose up debbuilder --exit-code-from debbuilder
+
+.PHONY: repo
+repo:
+	mkdir -p apt
+	chmod 777 apt
+	docker-compose pull aptrepo
+	docker-compose up aptrepo --exit-code-from aptrepo
