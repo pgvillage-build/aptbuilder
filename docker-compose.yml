@@ -42,3 +42,24 @@ services:
       - ./:/host
     environment:
       OUT_DIR: /host/deb
+  aptrepo:
+    image: docker.io/library/${BASEIMAGE:-ubuntu}:${VERSION:-26.04}
+    platform: linux/${ARCH:-arm64}
+    # the repo in a git checkout belongs to the host user, so run as root to be able to overwrite it
+    user: root
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        apt-get update -qq
+        DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --no-install-recommends apt-utils gnupg >/dev/null
+        /host/scripts/build_apt_repo.sh
+        /host/scripts/sign_apt_repo.sh
+    volumes:
+      - ./:/host
+    environment:
+      - DEB_DIR=/host/deb
+      - REPO_DIR=/host/apt
+      - CODENAME
+      - GPG_PASSPHRASE
+      - GPG_KEY_B64

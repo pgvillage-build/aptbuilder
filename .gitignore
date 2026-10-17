@@ -2,6 +2,9 @@
 dist/
 deb/
 
+# apt repository
+apt/
+
 # Intellij
 .idea/
 
