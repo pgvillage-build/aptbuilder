@@ -1,66 +1,80 @@
 #!/usr/bin/env bash
 #
-# Download a pgfga release tarball from GitHub and package it as a .deb.
+# Download {{ package_name }} {{ version }} release assets and package them as a .deb.
 #
-# Usage: ./build-pgfga-deb.sh [VERSION] [OS] [ARCH]
-#   VERSION  release version without leading "v" (default: 2.14.1)
-#   OS       release OS: darwin or linux          (default: darwin)
-#   ARCH     release arch: amd64 or arm64         (default: amd64)
+# Generated from a Jinja2 template; do not edit the rendered script by hand.
+#
+# Usage: ./build-{{ package_name }}-deb.sh
+#   OUT_DIR  directory to write the .deb to (default: ./dist)
 #
 # Uses dpkg-deb when available, otherwise assembles the .deb with ar + tar
 # (so it also works on macOS without extra tooling).
 
 set -euo pipefail
 
-PKG_NAME="${1:-pgfga}"
-VERSION="${2:-2.14.1}"
-OS="${3:-darwin}"
-ARCH="${4:-amd64}"
+PKG_NAME="{{ package_name }}"
+VERSION="{{ version }}"
+REVISION="{{ revision | default('1') }}"
+ARCH="{{ package_arch | default('amd64') }}"
 
-MAINTAINER="${MAINTAINER:-pgvillage-tools <noreply@github.com>}"
-TARBALL="${PKG_NAME}_v${VERSION}_${OS}_${ARCH}.tar.gz"
-URL="https://github.com/pgvillage-tools/pgfga/releases/download/v${VERSION}/${TARBALL}"
 OUT_DIR="${OUT_DIR:-$(pwd)/dist}"
-DEB_FILE="${OUT_DIR}/${PKG_NAME}_${VERSION}_${ARCH}.deb"
-
-if [[ "${OS}" != "linux" ]]; then
-  echo "WARNING: packaging a ${OS} binary; it will not run on Debian/Ubuntu." >&2
-fi
+DEB_FILE="${OUT_DIR}/${PKG_NAME}_${VERSION}-${REVISION}_${ARCH}.deb"
 
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR}"' EXIT
 
-# --- download & extract ------------------------------------------------------
-echo "Downloading ${URL}"
-curl -fsSL -o "${WORK_DIR}/${TARBALL}" "${URL}"
+SRC_DIR="${WORK_DIR}/src"
+PKG_ROOT="${WORK_DIR}/pkg"
+mkdir -p "${SRC_DIR}" "${PKG_ROOT}/DEBIAN"
 
-mkdir -p "${WORK_DIR}/src"
-tar -xzf "${WORK_DIR}/${TARBALL}" -C "${WORK_DIR}/src"
+# --- download & extract ------------------------------------------------------
+fetch_asset() {
+  local name="$1" url="$2"
+  echo "Downloading ${url}"
+  curl -fsSL -o "${WORK_DIR}/${name}" "${url}"
+  case "${name}" in
+    *.tar.gz | *.tgz | *.tar.xz | *.tar.bz2 | *.tar)
+      tar -xf "${WORK_DIR}/${name}" -C "${SRC_DIR}" ;;
+    *.zip)
+      unzip -q -o "${WORK_DIR}/${name}" -d "${SRC_DIR}" ;;
+    *)
+      cp "${WORK_DIR}/${name}" "${SRC_DIR}/${name}" ;;
+  esac
+}
+
+{% for asset in assets %}fetch_asset "{{ asset.name }}" "{{ asset.url }}"
+{% endfor %}
+# --- prep --------------------------------------------------------------------
+(
+  cd "${SRC_DIR}"
+{% for cmd in prep | default([]) %}  {{ cmd }}
+{% endfor %}  :
+)
 
 # --- package tree ------------------------------------------------------------
-PKG_ROOT="${WORK_DIR}/pkg"
-install -d -m 0755 "${PKG_ROOT}/DEBIAN" \
-  "${PKG_ROOT}/usr/bin" \
-  "${PKG_ROOT}/usr/share/doc/${PKG_NAME}"
-install -m 0755 "${WORK_DIR}/src/pgfga" "${PKG_ROOT}/usr/bin/pgfga"
-install -m 0644 "${WORK_DIR}/src/LICENSE" "${PKG_ROOT}/usr/share/doc/${PKG_NAME}/copyright"
-install -m 0644 "${WORK_DIR}/src/README.md" "${PKG_ROOT}/usr/share/doc/${PKG_NAME}/README.md"
+install_file() {
+  local mode="$1" src="$2" dest="$3"
+  mkdir -p "$(dirname "${PKG_ROOT}${dest}")"
+  install -m "${mode}" "${SRC_DIR}/${src}" "${PKG_ROOT}${dest}"
+}
 
-INSTALLED_SIZE="$(du -sk "${PKG_ROOT}/usr" | cut -f1)"
+{% for file in files %}install_file "{{ file.mode | default('0755') }}" "{{ file.src }}" "{{ file.dest }}"
+{% endfor %}
+INSTALLED_SIZE="$(du -sk "${PKG_ROOT}" | cut -f1)"
 
-cat > "${PKG_ROOT}/DEBIAN/control" <<EOF
-Package: ${PKG_NAME}
-Version: ${VERSION}
-Section: database
-Priority: optional
-Architecture: ${ARCH}
-Installed-Size: ${INSTALLED_SIZE}
-Maintainer: ${MAINTAINER}
-Homepage: https://github.com/pgvillage-tools/pgfga
-Description: PostgreSQL Fine Grained Access
- pgfga manages PostgreSQL users, roles, databases and permissions
- from a declarative configuration file.
-EOF
+cat > "${PKG_ROOT}/DEBIAN/control" <<'EOF'
+Package: {{ package_name }}
+Version: {{ version }}-{{ revision | default('1') }}
+Section: {{ section | default('misc') }}
+Priority: {{ priority | default('optional') }}
+Architecture: {{ package_arch | default('amd64') }}
+Maintainer: {{ maintainer | default('pgvillage-tools <noreply@github.com>') }}
+{% if requires %}Depends: {{ requires | join(', ') }}
+{% endif %}{% if url %}Homepage: {{ url }}
+{% endif %}Description: {{ description or package_name }}
+{% for line in (long_description or description or package_name).splitlines() %} {{ line if line.strip() else '.' }}
+{% endfor %}EOF
+echo "Installed-Size: ${INSTALLED_SIZE}" >> "${PKG_ROOT}/DEBIAN/control"
 
 # --- build .deb --------------------------------------------------------------
 mkdir -p "${OUT_DIR}"
@@ -80,9 +94,9 @@ else
   mkdir -p "${BUILD_DIR}"
   echo "2.0" > "${BUILD_DIR}/debian-binary"
   COPYFILE_DISABLE=1 tar "${OWNER_OPTS[@]}" -czf "${BUILD_DIR}/control.tar.gz" \
-    -C "${PKG_ROOT}/DEBIAN" ./control
+    -C "${PKG_ROOT}/DEBIAN" .
   COPYFILE_DISABLE=1 tar "${OWNER_OPTS[@]}" -czf "${BUILD_DIR}/data.tar.gz" \
-    -C "${PKG_ROOT}" ./usr
+    -C "${PKG_ROOT}" --exclude ./DEBIAN .
   (cd "${BUILD_DIR}" && ar rc "${DEB_FILE}" debian-binary control.tar.gz data.tar.gz)
 fi
 
