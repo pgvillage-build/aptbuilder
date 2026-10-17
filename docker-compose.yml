@@ -26,3 +26,19 @@ services:
     environment:
       GITHUB2SPEC_CONFIG: /host/config/github2spec.yaml
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+  debbuilder:
+    image: docker.io/library/${BASEIMAGE:-ubuntu}:${VERSION:-26.04}
+    platform: linux/${ARCH:-arm64}
+    # debs in a git checkout belong to the host user, so run as root to be able to overwrite them
+    user: root
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        apt-get update -qq
+        DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --no-install-recommends ca-certificates curl
+        /host/scripts/build_debs.sh
+    volumes:
+      - ./:/host
+    environment:
+      OUT_DIR: /host/deb

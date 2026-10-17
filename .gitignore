@@ -1,5 +1,6 @@
 # deb packages per distro
 dist/
+deb/
 
 # Intellij
 .idea/
