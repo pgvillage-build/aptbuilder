@@ -7,6 +7,9 @@ generated:
 	docker-compose pull debgen
 	docker-compose up debgen --exit-code-from debgen
 
-.PHONY: debs
-debs:
-	./scripts/build_debs.sh
+.PHONY: build
+build:
+	mkdir -p deb
+	chmod 777 deb
+	docker-compose pull debbuilder
+	docker-compose up debbuilder --exit-code-from debbuilder
