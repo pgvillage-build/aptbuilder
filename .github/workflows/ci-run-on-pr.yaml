@@ -1,0 +1,120 @@
+name: Minimal workflow for CI/CD
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+env:
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.versions.outputs.version }}
+    steps:
+      - name: find the latest released ubuntu lts
+        id: versions
+        run: |
+          VERSION=$(curl -fsSL https://endoflife.date/api/ubuntu.json |
+            jq -r --arg today "$(date +%F)" '[.[] | select(.lts and .releaseDate <= $today)] | max_by(.releaseDate) | .cycle')
+          echo "Building for ubuntu ${VERSION}"
+          [ -n "${VERSION}" ] && [ "${VERSION}" != null ]
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+  build_debs:
+    needs:
+      - versions
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - arm64
+    env:
+      BASEIMAGE: ubuntu
+      VERSION: ${{ needs.versions.outputs.version }}
+      ARCH: ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # https://github.com/docker/setup-qemu-action
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: update to docker-compose v2
+        run: |
+          sudo apt-get install -y curl
+          sudo curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
+      - name: build debs
+        run: make build
+
+      - name: add debs to apt repo
+        run: make repo
+        env:
+          GPG_PASSPHRASE: "${{ secrets.GPG_PASSPHRASE }}"
+          GPG_KEY_B64: "${{ secrets.GPG_KEY_B64 }}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: apt-ubuntu-${{ env.VERSION }}-${{ matrix.arch }}
+          path: apt/
+
+  apt_repo:
+    needs:
+      - build_debs
+    env:
+      # merging only re-indexes and signs, so run natively
+      ARCH: amd64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: update to docker-compose v2
+        run: |
+          sudo apt-get install -y curl
+          sudo curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: apt-*
+          path: apt/
+          merge-multiple: true
+
+      - name: merge apt repos
+        run: make repo
+        env:
+          GPG_PASSPHRASE: "${{ secrets.GPG_PASSPHRASE }}"
+          GPG_KEY_B64: "${{ secrets.GPG_KEY_B64 }}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: apt-repo
+          path: apt/
+
+  check-build-status:
+    runs-on: ubuntu-latest
+    needs:
+      - versions
+      - build_debs
+      - apt_repo
+    if: always()
+    steps:
+      - name: Evaluate build status
+        run: |
+          echo "Find versions result: ${{ needs.versions.result }}"
+          echo "Build debs result: ${{ needs.build_debs.result }}"
+          echo "Build apt repo result: ${{ needs.apt_repo.result }}"
+
+          for RESULT in ${{ join(needs.*.result, ' ') }}; do
+            case "$RESULT" in
+              success | skipped) ;;
+              failure) exit 1 ;;
+              *) echo "Tests were cancelled."; exit 1 ;;
+            esac
+          done

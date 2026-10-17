@@ -1,0 +1,118 @@
+name: Release workflow for tagged versions
+on:
+  release:
+    types:
+      - published
+
+env:
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    outputs:
+      baseimage_version: ${{ steps.versions.outputs.baseimage_version }}
+    steps:
+      - name: list released and supported versions of debian and ubuntu
+        id: versions
+        run: |
+          TODAY=$(date +%F)
+          BASEIMAGE_VERSION=$(for DISTRO in debian ubuntu; do
+            curl -fsSL "https://endoflife.date/api/${DISTRO}.json" |
+              jq -c --arg distro "${DISTRO}" --arg today "${TODAY}" \
+                '.[] | select(.releaseDate <= $today and (.eol == false or ((.eol | type) == "string" and .eol > $today))) | "\($distro):\(.cycle)"'
+          done | jq -sc .)
+          echo "Building for ${BASEIMAGE_VERSION}"
+          [ "${BASEIMAGE_VERSION}" != "[]" ]
+          echo "baseimage_version=${BASEIMAGE_VERSION}" >> "$GITHUB_OUTPUT"
+
+  build_debs:
+    needs:
+      - versions
+    strategy:
+      fail-fast: false
+      matrix:
+        baseimage_version: ${{ fromJSON(needs.versions.outputs.baseimage_version) }}
+        arch:
+          - amd64
+          - arm64
+    env:
+      ARCH: ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: split baseimage and version
+        run: |
+          BASEIMAGE_VERSION="${{ matrix.baseimage_version }}"
+          echo "BASEIMAGE=${BASEIMAGE_VERSION%%:*}" >> $GITHUB_ENV
+          echo "VERSION=${BASEIMAGE_VERSION#*:}" >> $GITHUB_ENV
+
+      # https://github.com/docker/setup-qemu-action
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: update to docker-compose v2
+        run: |
+          sudo apt-get install -y curl
+          sudo curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
+      - name: build debs
+        run: make build
+
+      - name: add debs to apt repo
+        run: make repo
+        env:
+          GPG_PASSPHRASE: "${{ secrets.GPG_PASSPHRASE }}"
+          GPG_KEY_B64: "${{ secrets.GPG_KEY_B64 }}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: apt-${{ env.BASEIMAGE }}-${{ env.VERSION }}-${{ matrix.arch }}
+          path: apt/
+
+  apt_repo:
+    needs:
+      - build_debs
+    env:
+      # merging only re-indexes and signs, so run natively
+      ARCH: amd64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: update to docker-compose v2
+        run: |
+          sudo apt-get install -y curl
+          sudo curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: apt-*
+          path: apt/
+          merge-multiple: true
+
+      - name: merge apt repos
+        run: make repo
+        env:
+          GPG_PASSPHRASE: "${{ secrets.GPG_PASSPHRASE }}"
+          GPG_KEY_B64: "${{ secrets.GPG_KEY_B64 }}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: apt-repo
+          path: apt/
+
+      - name: package apt repo
+        run: tar -C apt -czf apt-repo.tar.gz .
+
+      - name: Add apt repo to release
+        uses: softprops/action-gh-release@v3
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            apt-repo.tar.gz
