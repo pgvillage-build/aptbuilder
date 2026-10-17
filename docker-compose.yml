@@ -10,7 +10,7 @@ services:
       - -ec
       - |
         /specbuilder
-        for spec in /host/scripts/*.spec; do
+        for spec in /host/generated/*.spec; do
           script="$${spec%.spec}"
           case "$${script}" in
             *-x86_64) script="$${script%-x86_64}-amd64" ;;

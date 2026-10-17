@@ -1,5 +1,5 @@
 template: /host/templates/build-deb.sh.j2
-dest: /host/scripts/
+dest: /host/generated/
 repositories:
   chainsmith:
     organization: pgvillage-tools
