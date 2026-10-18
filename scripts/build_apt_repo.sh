@@ -10,7 +10,7 @@
 # repository that serves all of them:
 #
 #   apt/
-#     <ORIGIN>.asc                                  public key (from sign_apt_repo.sh)
+#     pgvillage.asc                                 public key (from sign_apt_repo.sh)
 #     pool/<codename>/<component>/<p>/<package>/*.deb
 #     dists/<codename>/Release
 #     dists/<codename>/{InRelease,Release.gpg}      signatures (from sign_apt_repo.sh)
@@ -21,9 +21,11 @@ set -e
 export DEB_DIR=${DEB_DIR:-${DEST}/deb}
 export REPO_DIR=${REPO_DIR:-${DEST}/apt}
 COMPONENT=${COMPONENT:-main}
-ORIGIN=${ORIGIN:-pgvillage}
+# apt refuses to update when Origin or Label of a repository changes, so keep these
+# the same as in the repositories that were published before
+ORIGIN=${ORIGIN:-PgVillage}
 LABEL=${LABEL:-${ORIGIN}}
-DESCRIPTION=${DESCRIPTION:-${LABEL} packages}
+DESCRIPTION=${DESCRIPTION:-Apt repository for ${LABEL} specific software and tools}
 
 if [ -z "${CODENAME}" ]; then
 	# shellcheck disable=SC1091
