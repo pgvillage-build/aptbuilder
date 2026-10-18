@@ -11,6 +11,8 @@ find "${DEST}/generated/" -name "build-*-${DEB_ARCH}-deb.sh" | sort | while read
 	bash "${SCRIPT}"
 done
 
+bash "${DEST}/scripts/fetch_debs.sh"
+
 ls "${OUT_DIR}/"*.deb
 
 echo Building debs finished succesfully
