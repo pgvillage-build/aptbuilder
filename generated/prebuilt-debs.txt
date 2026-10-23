@@ -1,0 +1,4 @@
+# Debs that are built per distro in another repository and attached to its releases.
+# Kept up to date by scripts/update_prebuilt_debs.sh (weekly schedule).
+# <github repository> <package> <release tag>
+pgvillage-build/wal-g-builder wal-g-pg v3.0.9b

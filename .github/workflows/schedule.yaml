@@ -48,6 +48,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: update prebuilt debs
+        run: scripts/update_prebuilt_debs.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: check on changes
         id: changed_files
         run: |
