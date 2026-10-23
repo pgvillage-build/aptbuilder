@@ -76,3 +76,10 @@ repositories:
       - src: 'etcd-{{ version }}-linux-{{ binary_arch }}/etcd'
         dest: '/usr/bin/etcd'
         mode: '0755'
+  rustfs:
+    organization: rustfs
+    asset_filter: '{{ repository }}-linux-{{ package_arch }}-musl-v{{ version }}.zip$'
+    files:
+      - src: '{{ repository }}'
+        dest: '/usr/bin/{{ repository }}'
+        mode: '0755'

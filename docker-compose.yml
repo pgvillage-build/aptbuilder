@@ -38,7 +38,7 @@ services:
       - -ec
       - |
         apt-get update -qq
-        DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --no-install-recommends ca-certificates curl
+        DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --no-install-recommends ca-certificates curl unzip
         /host/scripts/build_debs.sh
     volumes:
       - ./:/host
