@@ -83,3 +83,11 @@ repositories:
       - src: '{{ repository }}'
         dest: '/usr/bin/{{ repository }}'
         mode: '0755'
+  rustfs-cli:
+    organization: rustfs
+    repository: cli
+    asset_filter: '{{ package_name }}-linux-{{ binary_arch }}-{{ version }}.tar.gz$'
+    files:
+      - src: 'rc'
+        dest: '/usr/bin/rc'
+        mode: '0755'
