@@ -7,14 +7,13 @@ env:
   COMPOSE_DOCKER_CLI_BUILD: 1
 
 jobs:
-  # Builds everything when any other file than the package lists changed (or nothing is left to build),
-  # else only the entries that changed in config/github2deb.yaml (generate) and config/prebuilt-debs.txt (prebuilt).
+  # Builds everything when any other file than the package list changed (or nothing is left to build),
+  # else only the entries that changed in config/github2deb.yaml.
   changes:
     runs-on: ubuntu-latest
     outputs:
       all: ${{ steps.changes.outputs.all }}
       generate: ${{ steps.changes.outputs.generate }}
-      prebuilt: ${{ steps.changes.outputs.prebuilt }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -25,28 +24,24 @@ jobs:
         run: |
           BASE=$(git merge-base "origin/${{ github.base_ref }}" HEAD)
           ALL=false
-          if git diff --name-only "${BASE}" HEAD | grep -qvxE 'config/github2deb\.yaml|config/prebuilt-debs\.txt' ||
-            ! git show "${BASE}:config/github2deb.yaml" > "${RUNNER_TEMP}/base.yaml" ||
-            ! git show "${BASE}:config/prebuilt-debs.txt" > "${RUNNER_TEMP}/prebuilt-debs.txt"; then
+          if git diff --name-only "${BASE}" HEAD | grep -qvxF 'config/github2deb.yaml' ||
+            ! git show "${BASE}:config/github2deb.yaml" > "${RUNNER_TEMP}/base.yaml"; then
             ALL=true
           else
             # same specbuilder image as the debgen service in docker-compose.yml
             GENERATE=$(docker run --rm --entrypoint /specbuilder -v "${PWD}:/host" -v "${RUNNER_TEMP}:/base" \
               ghcr.io/pgvillage-tools/specbuilder:latest \
               -config /host/config/github2deb.yaml -changed /base/base.yaml | xargs)
-            PREBUILT=$(comm -13 <(grep -vE '^\s*(#|$)' "${RUNNER_TEMP}/prebuilt-debs.txt" | sort) \
-              <(grep -vE '^\s*(#|$)' config/prebuilt-debs.txt | sort) | awk '{print $2}' | xargs)
-            [ -z "${GENERATE}${PREBUILT}" ] && ALL=true
+            [ -z "${GENERATE}" ] && ALL=true
           fi
           if [ "${ALL}" = true ]; then
             echo "Building all packages"
           else
-            echo "Generating: ${GENERATE:-nothing}, prebuilt: ${PREBUILT:-nothing}"
+            echo "Building: ${GENERATE}"
           fi
           {
             echo "all=${ALL}"
             echo "generate=${GENERATE}"
-            echo "prebuilt=${PREBUILT}"
           } >> "$GITHUB_OUTPUT"
 
   versions:
@@ -79,7 +74,6 @@ jobs:
       ARCH: ${{ matrix.arch }}
       ALL: ${{ needs.changes.outputs.all }}
       GENERATE: ${{ needs.changes.outputs.generate }}
-      PREBUILT: ${{ needs.changes.outputs.prebuilt }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -100,21 +94,14 @@ jobs:
         run: |
           if [ "${ALL}" = true ]; then
             make generated
-          elif [ -n "${GENERATE}" ]; then
-            SPECBUILDER_ONLY="${GENERATE}" make generated
           else
-            mkdir -p generated
+            SPECBUILDER_ONLY="${GENERATE}" make generated
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: build debs
-        run: |
-          if [ "${ALL}" = true ]; then
-            make build
-          else
-            PREBUILT_PACKAGES="${PREBUILT}" make build
-          fi
+        run: make build
 
       - name: add debs to apt repo
         run: make repo
