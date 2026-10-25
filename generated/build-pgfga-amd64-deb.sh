@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Download pgfga v2.14.1 release assets and package them as a .deb.
+# Download pgfga v2.14.2 release assets and package them as a .deb.
 #
 # Generated from a Jinja2 template; do not edit the rendered script by hand.
 #
@@ -14,7 +14,7 @@ set -euo pipefail
 
 PKG_NAME="pgfga"
 # Debian versions must start with a digit, so strip the tag's leading "v".
-VERSION="v2.14.1"
+VERSION="v2.14.2"
 VERSION="${VERSION#v}"
 REVISION="1"
 ARCH="amd64"
@@ -44,7 +44,7 @@ fetch_asset() {
   esac
 }
 
-fetch_asset "pgfga_v2.14.1_linux_amd64.tar.gz" "https://github.com/pgvillage-tools/pgfga/releases/download/v2.14.1/pgfga_v2.14.1_linux_amd64.tar.gz"
+fetch_asset "pgfga_v2.14.2_linux_amd64.tar.gz" "https://github.com/pgvillage-tools/pgfga/releases/download/v2.14.2/pgfga_v2.14.2_linux_amd64.tar.gz"
 
 # --- prep --------------------------------------------------------------------
 (

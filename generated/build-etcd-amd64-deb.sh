@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Download etcd v3.7.2 release assets and package them as a .deb.
+# Download etcd v3.7.3 release assets and package them as a .deb.
 #
 # Generated from a Jinja2 template; do not edit the rendered script by hand.
 #
@@ -14,7 +14,7 @@ set -euo pipefail
 
 PKG_NAME="etcd"
 # Debian versions must start with a digit, so strip the tag's leading "v".
-VERSION="v3.7.2"
+VERSION="v3.7.3"
 VERSION="${VERSION#v}"
 REVISION="1"
 ARCH="amd64"
@@ -44,7 +44,7 @@ fetch_asset() {
   esac
 }
 
-fetch_asset "etcd-v3.7.2-linux-amd64.tar.gz" "https://github.com/etcd-io/etcd/releases/download/v3.7.2/etcd-v3.7.2-linux-amd64.tar.gz"
+fetch_asset "etcd-v3.7.3-linux-amd64.tar.gz" "https://github.com/etcd-io/etcd/releases/download/v3.7.3/etcd-v3.7.3-linux-amd64.tar.gz"
 
 # --- prep --------------------------------------------------------------------
 (
@@ -59,8 +59,8 @@ install_file() {
   install -m "${mode}" "${SRC_DIR}/${src}" "${PKG_ROOT}${dest}"
 }
 
-install_file "0755" "etcd-v3.7.2-linux-amd64/etcdctl" "/usr/bin/etcdctl"
-install_file "0755" "etcd-v3.7.2-linux-amd64/etcd" "/usr/bin/etcd"
+install_file "0755" "etcd-v3.7.3-linux-amd64/etcdctl" "/usr/bin/etcdctl"
+install_file "0755" "etcd-v3.7.3-linux-amd64/etcd" "/usr/bin/etcd"
 
 INSTALLED_SIZE="$(du -sk "${PKG_ROOT}" | cut -f1)"
 
