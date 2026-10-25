@@ -39,7 +39,7 @@ jobs:
     env:
       ARCH: ${{ matrix.arch }}
     # build on a runner of the target arch (native arm64 runners are free for public repos), no QEMU
-    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - uses: actions/checkout@v7
 
