@@ -1,8 +1,12 @@
 template: /host/templates/build-deb.sh.j2
 dest: /host/generated/
+# Every entry pins its upstream release with target_release, which Renovate bumps (see renovate.json).
+# specbuilder reads repos/<org>/<repo>/releases/<target_release> from the GitHub API, hence the tags/ prefix.
 repositories:
   chainsmith:
     organization: pgvillage-tools
+    # renovate: datasource=github-releases depName=pgvillage-tools/chainsmith
+    target_release: tags/v0.3.23
     asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
     files:
       - src: '{{ repository }}'
@@ -10,6 +14,8 @@ repositories:
         mode: '0755'
   pgtester:
     organization: pgvillage-tools
+    # renovate: datasource=github-releases depName=pgvillage-tools/pgtester
+    target_release: tags/v0.6.14
     asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
     files:
       - src: '{{ repository }}'
@@ -17,6 +23,8 @@ repositories:
         mode: '0755'
   pgfga:
     organization: pgvillage-tools
+    # renovate: datasource=github-releases depName=pgvillage-tools/pgfga
+    target_release: tags/v2.14.2
     asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
     files:
       - src: '{{ repository }}'
@@ -24,6 +32,8 @@ repositories:
         mode: '0755'
   pgav:
     organization: pgvillage-tools
+    # renovate: datasource=github-releases depName=pgvillage-tools/pgav
+    target_release: tags/v0.1.2
     asset_filter: '{{ repository }}_{{ version }}_Linux-{{ package_arch }}.tar.gz$'
     files:
       - src: '{{ repository }}'
@@ -31,6 +41,8 @@ repositories:
         mode: '0755'
   pgroute66:
     organization: pgvillage-tools
+    # renovate: datasource=github-releases depName=pgvillage-tools/pgroute66
+    target_release: tags/v0.8.28
     asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
     files:
       - src: '{{ repository }}'
@@ -38,6 +50,8 @@ repositories:
         mode: '0755'
   pgquartz:
     organization: pgvillage-tools
+    # renovate: datasource=github-releases depName=pgvillage-tools/pgquartz
+    target_release: tags/v0.6.8
     asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
     files:
       - src: '{{ repository }}'
@@ -45,6 +59,8 @@ repositories:
         mode: '0755'
   pgcustodian:
     organization: pgvillage-tools
+    # renovate: datasource=github-releases depName=pgvillage-tools/pgcustodian
+    target_release: tags/v0.1.2
     asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
     files:
       - src: '{{ repository }}'
@@ -52,6 +68,8 @@ repositories:
         mode: '0755'
   stolon:
     organization: pgvillage-tools
+    # renovate: datasource=github-releases depName=pgvillage-tools/stolon
+    target_release: tags/v0.19.7
     asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
     files:
       - src: 'stolonctl'
@@ -68,6 +86,8 @@ repositories:
         mode: '0755'
   etcd:
     organization: etcd-io
+    # renovate: datasource=github-releases depName=etcd-io/etcd
+    target_release: tags/v3.7.3
     asset_filter: '{{ package_name }}-{{ version }}-linux-{{ binary_arch }}.tar.gz$'
     files:
       - src: 'etcd-{{ version }}-linux-{{ binary_arch }}/etcdctl'
@@ -78,6 +98,8 @@ repositories:
         mode: '0755'
   rustfs:
     organization: rustfs
+    # renovate: datasource=github-releases depName=rustfs/rustfs
+    target_release: tags/1.0.3
     asset_filter: '{{ repository }}-linux-{{ package_arch }}-musl-v{{ version }}.zip$'
     files:
       - src: '{{ repository }}'
@@ -86,6 +108,8 @@ repositories:
   rustfs-cli:
     organization: rustfs
     repository: cli
+    # renovate: datasource=github-releases depName=rustfs/cli
+    target_release: tags/v0.1.36
     asset_filter: '{{ package_name }}-linux-{{ binary_arch }}-{{ version }}.tar.gz$'
     files:
       - src: 'rc'
@@ -94,6 +118,8 @@ repositories:
   pg-tps-optimizer:
     organization: pgvillage-tools
     repository: pg_tps_optimizer
+    # renovate: datasource=github-releases depName=pgvillage-tools/pg_tps_optimizer
+    target_release: tags/v0.3.0
     # tags are v<version>, asset names and the directory in the tarball are without the v
     asset_filter: '{{ repository }}-{{ version | replace("v", "") }}-{{ package_arch }}-unknown-linux-musl.tar.gz$'
     files:

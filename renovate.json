@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "schedule": ["before 6am on monday"],
+  "semanticCommits": "enabled",
+  "labels": ["dependencies"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Upstream releases that specbuilder packages (target_release in config/github2spec.yaml)",
+      "managerFilePatterns": ["/^config/github2spec\\.yaml$/"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\s*\\n\\s*target_release:\\s*tags/(?<currentValue>\\S+)"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Releases with prebuilt debs (<github repository> <package> <release tag> in config/prebuilt-debs.txt)",
+      "managerFilePatterns": ["/^config/prebuilt-debs\\.txt$/"],
+      "matchStrings": ["\\n(?<depName>[\\w.-]+/[\\w.-]+) +\\S+ +(?<currentValue>\\S+)"],
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose"
+    }
+  ]
+}

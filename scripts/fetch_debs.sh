@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Download the prebuilt debs listed in generated/prebuilt-debs.txt for the distro and
+# Download the prebuilt debs listed in config/prebuilt-debs.txt for the distro and
 # architecture of this system into OUT_DIR.
 #
 # These repositories build a deb per distro with revision 1~<ID><VERSION_ID> (from
@@ -11,7 +11,7 @@ set -e
 
 [ -e /host ] && DEST=/host || DEST="$(cd "$(dirname "$0")/.." && pwd)"
 export OUT_DIR=${OUT_DIR:-${DEST}/deb}
-PREBUILT=${PREBUILT:-${DEST}/generated/prebuilt-debs.txt}
+PREBUILT=${PREBUILT:-${DEST}/config/prebuilt-debs.txt}
 DEB_ARCH=${DEB_ARCH:-$(dpkg --print-architecture)}
 
 # shellcheck disable=SC1091
