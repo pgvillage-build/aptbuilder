@@ -26,8 +26,10 @@ services:
     volumes:
       - ./:/host
     environment:
-      GITHUB2SPEC_CONFIG: /host/config/github2spec.yaml
+      GITHUB2SPEC_CONFIG: /host/config/github2deb.yaml
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      # only generate these packages (all of them when empty)
+      SPECBUILDER_ONLY: ${SPECBUILDER_ONLY:-}
   debbuilder:
     image: docker.io/library/${BASEIMAGE:-ubuntu}:${VERSION:-26.04}
     platform: linux/${ARCH:-arm64}
@@ -44,7 +46,8 @@ services:
       - ./:/host
     environment:
       OUT_DIR: /host/deb
-      PACKAGES: ${PACKAGES:-}
+      # passed on only when set: then only these prebuilt debs are fetched (see scripts/fetch_debs.sh)
+      PREBUILT_PACKAGES:
   aptrepo:
     image: docker.io/library/${BASEIMAGE:-ubuntu}:${VERSION:-26.04}
     platform: linux/${ARCH:-arm64}

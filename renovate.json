@@ -7,8 +7,8 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Upstream releases that specbuilder packages (target_release in config/github2spec.yaml)",
-      "managerFilePatterns": ["/^config/github2spec\\.yaml$/"],
+      "description": "Upstream releases that specbuilder packages (target_release in config/github2deb.yaml)",
+      "managerFilePatterns": ["/^config/github2deb\\.yaml$/"],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\s*\\n\\s*target_release:\\s*tags/(?<currentValue>\\S+)"
       ]
