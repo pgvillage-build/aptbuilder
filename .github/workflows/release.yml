@@ -59,6 +59,12 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose --version
 
+      # specbuilder generates the scripts for ARCH, from the pinned releases in config/github2spec.yaml
+      - name: generate build scripts
+        run: make generated
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: build debs
         run: make build
 
