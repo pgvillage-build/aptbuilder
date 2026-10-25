@@ -1,4 +1,0 @@
-# Debs that are built per distro in another repository and attached to its releases.
-# Renovate bumps the release tags (see renovate.json).
-# <github repository> <package> <release tag>
-pgvillage-build/wal-g-builder wal-g-pg v3.0.9b
