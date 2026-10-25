@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+#
+# Build {{ package_name }} {{ version }} from source with go and package it as a .deb for the distro of this system.
+#
+# Generated from a Jinja2 template; do not edit the rendered script by hand.
+#
+# Installs the build dependencies with apt-get, so run it as root in a throwaway container
+# (like the debbuilder service in docker-compose.yml).
+#
+# The revision is tagged with the distro (1~<ID><VERSION_ID> from /etc/os-release, like %{?dist} for rpms),
+# so the debs for different distros don't clash in the apt repository.
+#
+# Usage: ./build-{{ package_name }}-{{ binary_arch }}-deb.sh
+#   OUT_DIR  directory to write the .deb to (default: ./dist)
+
+set -euo pipefail
+
+PKG_NAME="{{ package_name }}"
+# the git tag to build (target_release is a tag, optionally with a tags/ prefix)
+TAG="{{ target_release | replace('tags/', '') }}"
+# Debian versions must start with a digit, so strip the tag's leading "v".
+VERSION="{{ version }}"
+VERSION="${VERSION#v}"
+# shellcheck disable=SC1091
+DIST="$(. /etc/os-release && echo "${ID}${VERSION_ID}")"
+REVISION="{{ revision | default('1') }}~${DIST}"
+ARCH="{{ binary_arch }}"
+GO_VERSION="{{ go_version }}"
+
+OUT_DIR="${OUT_DIR:-$(pwd)/dist}"
+DEB_FILE="${OUT_DIR}/${PKG_NAME}_${VERSION}-${REVISION}_${ARCH}.deb"
+
+WORK_DIR="$(mktemp -d)"
+trap 'rm -rf "${WORK_DIR}"' EXIT
+SRC_DIR="${WORK_DIR}/src"
+PKG_ROOT="${WORK_DIR}/pkg"
+
+# --- build dependencies ------------------------------------------------------
+apt-get update -qq
+DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --no-install-recommends \
+{% for pkg in build_requires %}  {{ pkg }} \
+{% endfor %}  >/dev/null
+
+echo "Downloading go ${GO_VERSION}"
+curl -fsSL --retry 3 "https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" | tar -xz -C "${WORK_DIR}"
+export PATH="${WORK_DIR}/go/bin:${PATH}"
+export GOPATH="${WORK_DIR}/gopath"
+export GOCACHE="${WORK_DIR}/gocache"
+
+# --- build -------------------------------------------------------------------
+echo "Cloning {{ url }} ${TAG}"
+git clone -q --depth 1 --branch "${TAG}" "{{ url }}.git" "${SRC_DIR}"
+(
+  cd "${SRC_DIR}"
+  GITREV="$(git rev-parse HEAD)"
+{% for cmd in build %}  {{ cmd }}
+{% endfor %})
+
+# --- package tree ------------------------------------------------------------
+mkdir -p "${PKG_ROOT}/DEBIAN"
+{% for file in files %}install -D -m "{{ file.mode | default('0755') }}" "${SRC_DIR}/{{ file.src }}" "${PKG_ROOT}{{ file.dest }}"
+{% endfor %}
+INSTALLED_SIZE="$(du -sk "${PKG_ROOT}" | cut -f1)"
+
+cat > "${PKG_ROOT}/DEBIAN/control" <<EOF
+Package: ${PKG_NAME}
+Version: ${VERSION}-${REVISION}
+Section: {{ section | default('misc') }}
+Priority: optional
+Architecture: ${ARCH}
+Maintainer: {{ maintainer | default('pgvillage-tools <noreply@github.com>') }}
+Installed-Size: ${INSTALLED_SIZE}
+{% if requires %}Depends: {{ requires | join(', ') }}
+{% endif %}Homepage: {{ url }}
+Description: {{ description or package_name }}
+ {{ long_description or description or package_name }}
+EOF
+
+# --- build .deb --------------------------------------------------------------
+mkdir -p "${OUT_DIR}"
+rm -f "${DEB_FILE}"
+dpkg-deb --root-owner-group --build "${PKG_ROOT}" "${DEB_FILE}"
+echo "Built ${DEB_FILE}"

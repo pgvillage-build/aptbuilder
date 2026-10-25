@@ -7,10 +7,10 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Upstream releases that specbuilder packages (target_release in config/github2deb.yaml)",
+      "description": "Versions pinned in config/github2deb.yaml: the key below a renovate comment (target_release, go_version)",
       "managerFilePatterns": ["/^config/github2deb\\.yaml$/"],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*target_release:\\s*tags/(?<currentValue>\\S+)"
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*[a-z_]+:\\s*(?:tags/)?(?<currentValue>\\S+)"
       ]
     }
   ]

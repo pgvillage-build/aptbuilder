@@ -127,10 +127,33 @@ repositories:
         dest: '/usr/bin/{{ repository }}'
         mode: '0755'
   wal-g-pg:
-    organization: pgvillage-build
-    repository: wal-g-builder
-    # wal-g-builder releases a deb per distro: the script only downloads the one for the distro it runs on
-    template: /host/templates/fetch-deb.sh.j2
-    # renovate: datasource=github-releases depName=pgvillage-build/wal-g-builder versioning=loose
+    organization: pgvillage-tools
+    repository: wal-g
+    # built from source; libsodium, lzo and brotli are linked statically, so the deb only needs libc
+    template: /host/templates/build-go.sh.j2
+    # renovate: datasource=github-releases depName=pgvillage-tools/wal-g versioning=loose
     target_release: tags/v3.0.9b
-    asset_filter: '^{{ package_name }}_.*_{{ binary_arch }}\.deb$'
+    # renovate: datasource=golang-version depName=go
+    go_version: 1.27.1
+    description: Archival and Restoration for PostgreSQL databases
+    long_description: Archival and Restoration for databases in the Cloud
+    section: database
+    build_requires:
+      - ca-certificates
+      - curl
+      - git
+      - cmake
+      - build-essential
+      - pkg-config
+      - liblzo2-dev
+      - libsodium-dev
+    build:
+      - USE_BROTLI=yes USE_LIBSODIUM=yes USE_LZO=yes make deps
+      - >-
+        go build -tags "brotli libsodium liblzo" -o wal-g-pg -ldflags "-s -w
+        -X github.com/wal-g/wal-g/cmd/pg.buildDate=$(date -u +%Y.%m.%d_%H:%M:%S)
+        -X github.com/wal-g/wal-g/cmd/pg.gitRevision=${GITREV}
+        -X github.com/wal-g/wal-g/cmd/pg.walgVersion=${TAG}" ./main/pg
+    files:
+      - src: wal-g-pg
+        dest: /usr/local/bin/wal-g-pg
