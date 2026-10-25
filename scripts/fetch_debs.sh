@@ -19,6 +19,10 @@ DIST="$(. /etc/os-release && echo "${ID}${VERSION_ID}")"
 
 mkdir -p "${OUT_DIR}"
 grep -vE '^\s*(#|$)' "${PREBUILT}" | while read -r REPO PACKAGE TAG; do
+	# PACKAGES (space separated) limits the packages, all of them when empty
+	if [ -n "${PACKAGES}" ] && [[ " ${PACKAGES} " != *" ${PACKAGE} "* ]]; then
+		continue
+	fi
 	# same version mangling as build-deb.sh in the source repository
 	VERSION="${TAG%-*}"
 	VERSION="${VERSION#v}"

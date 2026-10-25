@@ -44,6 +44,7 @@ services:
       - ./:/host
     environment:
       OUT_DIR: /host/deb
+      PACKAGES: ${PACKAGES:-}
   aptrepo:
     image: docker.io/library/${BASEIMAGE:-ubuntu}:${VERSION:-26.04}
     platform: linux/${ARCH:-arm64}
