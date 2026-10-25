@@ -119,7 +119,7 @@ repositories:
     organization: pgvillage-tools
     repository: pg_tps_optimizer
     # renovate: datasource=github-releases depName=pgvillage-tools/pg_tps_optimizer
-    target_release: tags/v0.3.0
+    target_release: tags/v1.0.1
     # tags are v<version>, asset names and the directory in the tarball are without the v
     asset_filter: '{{ repository }}-{{ version | replace("v", "") }}-{{ package_arch }}-unknown-linux-musl.tar.gz$'
     files:
