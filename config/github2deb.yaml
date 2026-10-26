@@ -99,7 +99,7 @@ repositories:
   rustfs:
     organization: rustfs
     # renovate: datasource=github-releases depName=rustfs/rustfs
-    target_release: tags/1.0.3
+    target_release: tags/1.0.4
     asset_filter: '{{ repository }}-linux-{{ package_arch }}-musl-v{{ version }}.zip$'
     files:
       - src: '{{ repository }}'
