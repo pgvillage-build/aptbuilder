@@ -134,7 +134,7 @@ repositories:
     # renovate: datasource=github-releases depName=pgvillage-tools/wal-g versioning=loose
     target_release: tags/v3.0.9b
     # renovate: datasource=golang-version depName=go
-    go_version: 1.27.1
+    go_version: 1.27.3
     description: Archival and Restoration for PostgreSQL databases
     long_description: Archival and Restoration for databases in the Cloud
     section: database
