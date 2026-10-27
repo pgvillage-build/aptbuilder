@@ -156,4 +156,4 @@ repositories:
         -X github.com/wal-g/wal-g/cmd/pg.walgVersion=${TAG}" ./main/pg
     files:
       - src: wal-g-pg
-        dest: /usr/local/bin/wal-g-pg
+        dest: /usr/bin/wal-g-pg
