@@ -132,7 +132,7 @@ repositories:
     # built from source; libsodium, lzo and brotli are linked statically, so the deb only needs libc
     template: /host/templates/build-go.sh.j2
     # renovate: datasource=github-releases depName=pgvillage-tools/wal-g versioning=loose
-    target_release: tags/v3.0.9b
+    target_release: tags/v3.0.9c
     # renovate: datasource=golang-version depName=go
     go_version: 1.27.3
     description: Archival and Restoration for PostgreSQL databases
