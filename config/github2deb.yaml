@@ -109,7 +109,7 @@ repositories:
     organization: rustfs
     repository: cli
     # renovate: datasource=github-releases depName=rustfs/cli
-    target_release: tags/v0.1.36
+    target_release: tags/v0.1.37
     asset_filter: '{{ package_name }}-linux-{{ binary_arch }}-{{ version }}.tar.gz$'
     files:
       - src: 'rc'
