@@ -51,7 +51,7 @@ repositories:
   pgquartz:
     organization: pgvillage-tools
     # renovate: datasource=github-releases depName=pgvillage-tools/pgquartz
-    target_release: tags/v0.6.8
+    target_release: tags/v0.6.9
     asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
     files:
       - src: '{{ repository }}'
