@@ -69,7 +69,7 @@ repositories:
   stolon:
     organization: pgvillage-tools
     # renovate: datasource=github-releases depName=pgvillage-tools/stolon
-    target_release: tags/v0.19.7
+    target_release: tags/v0.19.8
     asset_filter: '{{ repository }}_{{ version }}_linux_{{ binary_arch }}.tar.gz$'
     files:
       - src: 'stolonctl'
