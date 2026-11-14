@@ -2,13 +2,16 @@ name: Minimal workflow for CI/CD
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  # The required checks also run in the merge queue: the tested commit is what lands on main
+  merge_group:
 
 env:
   COMPOSE_DOCKER_CLI_BUILD: 1
 
 jobs:
   # Builds everything when any other file than the package list changed (or nothing is left to build),
-  # else only the entries that changed in config/github2deb.yaml.
+  # else only the entries that changed in config/github2deb.yaml. Outside a pull request (merge queue) it
+  # always builds everything.
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -21,10 +24,16 @@ jobs:
 
       - name: find the packages this PR changes
         id: changes
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          BASE=$(git merge-base "origin/${{ github.base_ref }}" HEAD)
           ALL=false
-          if git diff --name-only "${BASE}" HEAD | grep -qvxF 'config/github2deb.yaml' ||
+          if [ "${EVENT}" = pull_request ]; then
+            BASE=$(git merge-base "origin/${BASE_REF}" HEAD)
+          fi
+          if [ "${EVENT}" != pull_request ] ||
+            git diff --name-only "${BASE}" HEAD | grep -qvxF 'config/github2deb.yaml' ||
             ! git show "${BASE}:config/github2deb.yaml" > "${RUNNER_TEMP}/base.yaml"; then
             ALL=true
           else
@@ -79,12 +88,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: update to docker-compose v2
-        run: |
-          sudo apt-get install -y curl
-          sudo curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-$(uname -m) -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose --version
+      # The Makefile uses the docker compose plugin of the runner, instead of a download from GitHub releases
+      - name: docker compose version
+        run: docker compose version
 
       # specbuilder generates the scripts for ARCH, from the pinned releases in config/github2deb.yaml
       - name: generate build scripts
@@ -121,12 +127,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: update to docker-compose v2
-        run: |
-          sudo apt-get install -y curl
-          sudo curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-$(uname -m) -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose --version
+      # The Makefile uses the docker compose plugin of the runner, instead of a download from GitHub releases
+      - name: docker compose version
+        run: docker compose version
 
       - uses: actions/download-artifact@v8
         with:
@@ -168,3 +171,26 @@ jobs:
               *) echo "Tests were cancelled."; exit 1 ;;
             esac
           done
+
+  # The only required check of this workflow, so the ruleset doesn't change when jobs are added. It must always run,
+  # and only passes when every job it needs succeeded (a skipped required check would count as a pass).
+  ci-result:
+    name: CI result
+    runs-on: ubuntu-latest
+    needs:
+      - changes
+      - versions
+      - build_debs
+      - apt_repo
+      - check-build-status
+    if: always()
+    steps:
+      - name: Evaluate the results
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "Results: ${RESULTS}"
+          if [ "$(echo "${RESULTS}" | jq -r 'all(. == "success")')" != true ]; then
+            echo "::error::All CI jobs must succeed"
+            exit 1
+          fi
