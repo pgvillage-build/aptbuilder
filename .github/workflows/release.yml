@@ -49,12 +49,9 @@ jobs:
           echo "BASEIMAGE=${BASEIMAGE_VERSION%%:*}" >> $GITHUB_ENV
           echo "VERSION=${BASEIMAGE_VERSION#*:}" >> $GITHUB_ENV
 
-      - name: update to docker-compose v2
-        run: |
-          sudo apt-get install -y curl
-          sudo curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-$(uname -m) -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose --version
+      # The Makefile uses the docker compose plugin of the runner, instead of a download from GitHub releases
+      - name: docker compose version
+        run: docker compose version
 
       # specbuilder generates the scripts for ARCH, from the pinned releases in config/github2deb.yaml
       - name: generate build scripts
@@ -86,12 +83,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: update to docker-compose v2
-        run: |
-          sudo apt-get install -y curl
-          sudo curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-$(uname -m) -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose --version
+      # The Makefile uses the docker compose plugin of the runner, instead of a download from GitHub releases
+      - name: docker compose version
+        run: docker compose version
 
       - uses: actions/download-artifact@v8
         with:
