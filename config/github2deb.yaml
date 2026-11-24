@@ -87,7 +87,7 @@ repositories:
   etcd:
     organization: etcd-io
     # renovate: datasource=github-releases depName=etcd-io/etcd
-    target_release: tags/v3.7.3
+    target_release: tags/v3.7.4
     asset_filter: '{{ package_name }}-{{ version }}-linux-{{ binary_arch }}.tar.gz$'
     files:
       - src: 'etcd-{{ version }}-linux-{{ binary_arch }}/etcdctl'
